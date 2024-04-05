@@ -27,7 +27,10 @@ function clear() {
 function showDepth(now) {
     ctx.strokeStyle = "black"
     ctx.font = "12px monospace"
-    ctx.strokeText(`depth: ${now.toFixed(1)} meters`,0, 10)
+    ctx.fillStyle="white"
+    ctx.lineWidth = 1
+    ctx.fillRect(0, height-20, 180, 20)
+    ctx.strokeText(`depth: ${now.toFixed(1)} meters`,5, height-5)
 }
 
 function getLeftWall(d) { return Math.sin(d/3)/8+0.25 } // 0 t
@@ -113,7 +116,6 @@ function showPlayer() {
     ctx.fill()
 }
 function playerCollides() { return false }
-function showDepth() {}
 function showGameOver() {}
 
 function tick(now, elapsed) {
@@ -123,9 +125,9 @@ function tick(now, elapsed) {
         showGameOver()
         return
     }
-    showDepth(depth)
     showLevelWalls(depth, depth+height/pixelsPerSecond)
     showLevelMagnets(depth, depth+height/pixelsPerSecond)
+    showDepth(depth)
     showPlayer(x)
     if (playerCollides(x)) alive=false
 }
