@@ -3,12 +3,14 @@ canvas.width = 600
 canvas.height = 600
 var ctx = canvas.getContext("2d")
 var [width, height] = [canvas.width, canvas.height]
-var pixelsPerSecond = 10
+var pixelsPerSecond = 30
 
 // State
 var x = 0.5
+var playerY = 2
 var alive = true
 var polarity = true
+var score = 0
 
 function randomBool() { return Math.random() < 0.5 }
 
@@ -49,7 +51,7 @@ function nthMagnet(i, depth) {
 }
 function getMagnets(d1, d2) {
     var magnets = []
-    var spacing = 10
+    var spacing = 5
     for (i=Math.ceil(d1/spacing); i<d2/spacing; i++) {
         magnets.push(nthMagnet(i, i*spacing));
     }
@@ -85,7 +87,6 @@ function showLevelWalls(d1, d2) {
     ctx.fill()
 }
 function drawMagnet(x, y, polarity) {
-    console.log("showPlayer")
     if (polarity) {
         ctx.fillStyle="red";
     } else {
@@ -105,18 +106,44 @@ function showLevelMagnets(d1, d2) {
     }
 }
 function showPlayer() {
-    console.log("showPlayer")
     if (polarity) {
         ctx.fillStyle="red";
     } else {
         ctx.fillStyle = "blue";
     }
     ctx.beginPath()
-    ctx.arc(xToPixels(x), 50, 20, 0, 2*Math.PI)
+    ctx.arc(xToPixels(x), playerY*pixelsPerSecond, 20, 0, 2*Math.PI)
     ctx.fill()
 }
-function playerCollides() { return false }
-function showGameOver() {}
+function playerCollides(d) {
+    l = getLeftWall(d)
+    r = getRightWall(d)
+    distance = Math.min((x-l), (r-x))
+    if (distance < 0) die(d)
+}
+function die(d) {
+    alive = false
+    score = d
+}
+function showGameOver() {
+    ctx.strokeStyle = "black"
+    ctx.font = "12px monospace"
+    ctx.lineWidth = 1
+    ctx.strokeText(`final depth: ${score.toFixed(1)} meters`,width/2-100, height/2)
+}
+function nearbyMagnet(depth) {
+    magnetRange = 2
+    nearby = getMagnets(depth - magnetRange, depth + magnetRange);
+    if (nearby.length == 0) return null
+    return nearby[0]
+}
+function movePlayer(playerDepth, elapsed) {
+    m = nearbyMagnet(playerDepth)
+    console.log(m)
+    if (!m) return
+    moveDir = m.polarity ^ m.side ^ polarity
+    x += 0.1 * (moveDir ? 1 : -1) * elapsed
+}
 
 function tick(now, elapsed) {
     var depth = now
@@ -128,8 +155,9 @@ function tick(now, elapsed) {
     showLevelWalls(depth, depth+height/pixelsPerSecond)
     showLevelMagnets(depth, depth+height/pixelsPerSecond)
     showDepth(depth)
-    showPlayer(x)
-    if (playerCollides(x)) alive=false
+    showPlayer(x, depth+playerY)
+    movePlayer(depth+playerY, elapsed)
+    if (playerCollides(depth+playerY)) alive=false
 }
 
 function time() { return new Date().getTime() }
